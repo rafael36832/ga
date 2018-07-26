@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <time.h>
 #include <math.h>
+#include 'values.h'
 
 using namespace std;
 
