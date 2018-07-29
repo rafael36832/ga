@@ -28,6 +28,7 @@ public:
     int fitness(){              // calculate and return the fitness value of i individual
         
         fitnessValue += data.FV;
+        bool possible = true;
 
         for(int i=1; i<data.N; i++){
             
@@ -60,7 +61,7 @@ public:
                     
                 }
 
-            } else {                // it's a costumerar
+            } else {                // it's a costumer
 
                 if(data.CD[depotNow] >= (depotNowValue + data.d[pop[i]])){ // verificar se o depot pode 
                     
@@ -83,12 +84,32 @@ public:
                     }                             
             
             
-                }  else { // impossível
+                }  else { // impossible
+
+                    depotNowValue += data.d[pop[i]];
+                    fitnessValue += data.c[depotNow][pop[i]];
+                    carroNow =  data.d[pop[i]];
+                    wayNow = pop[i];
+
+                    fitnessValue += data.FV;
 
                     possible = false;
 
                 }
+            }
+
+            if(i == data.N - 1){  // last iteration
+
+                if(depotNow != wayNow){ // last depot is opened
+
+                    fitnessValue += fitnessValue += data.FD[depotNow];
+                    
+                }
+
+            }
         }
+
+        return fitnessValue;
 
     }
     
