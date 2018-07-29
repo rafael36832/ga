@@ -13,11 +13,12 @@ public:
     
     int * pop;              // population vector
     int fitnessValue = 0; 
+    bool possible = true;
     int carroNow = 0; 
     int depotNow = pop[0];
+    int depotNowValue = 0;
     int wayNow = pop[0];
-    bool possible = true;
-    
+
     Individuo(){
 
         pop = new int[nPop];    // start population vector with size nPop data.LoadBarreto("../Instances/21x5.dat");
@@ -26,8 +27,11 @@ public:
 
     int fitness(){              // calculate and return the fitness value of i individual
         
-        for(int i=1; i<data.N; i++){
+        fitnessValue += data.FV;
 
+        for(int i=1; i<data.N; i++){
+            
+            
             if(pop[i] == 0){    // zero 
                 
                 // aux
@@ -58,10 +62,32 @@ public:
 
             } else {                // it's a costumerar
 
-                // verificar se o depot pode 
-                    // verificar se o carro pode                  
+                if(data.CD[depotNow] >= (depotNowValue + data.d[pop[i]])){ // verificar se o depot pode 
+                    
+                    if(data.CV >= (carroNow + data.d[pop[i]])){ // verificar se o carro pode
+
+                        depotNowValue += data.d[pop[i]];    
+                        fitnessValue += data.c[wayNow][pop[i]]; 
+                        carroNow +=  data.d[pop[i]];
+                        wayNow = pop[i];
+
+                    } else {  // o carro não pode
+                        
+                        depotNowValue += data.d[pop[i]];
+                        fitnessValue += data.c[depotNow][pop[i]];
+                        carroNow =  data.d[pop[i]];
+                        wayNow = pop[i];
+
+                        fitnessValue += data.FV;
+
+                    }                             
             
-            }
+            
+                }  else { // impossível
+
+                    possible = false;
+
+                }
         }
 
     }
