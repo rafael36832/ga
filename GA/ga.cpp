@@ -1,39 +1,121 @@
 #include <iostream>
 #include <algorithm>
+#include <vector> 
 #include <time.h>
 #include <math.h>
+#include <cstdlib>
 #include "values.h"
-#define nPop 41
+#define nPop 40
 
 Values data;
+
+using namespace std;
 
 class Individuo {
 
 public:
     
     int * pop;              // population vector
-    int fitnessValue = 0; 
-    bool possible = true;
-    int carroNow = 0; 
-    int depotNow = pop[0];
-    int depotNowValue = 0;
-    int wayNow = pop[0];
+    int aux;
+    int tam;
+    float fitnessValue; 
+    bool possible;
+    int carroNow; 
+    int depotNow;
+    int depotNowValue;
+    int wayNow;
 
     Individuo(){
+        
+        vector<int> RDepot;         
+        vector<int> R;
+        vector<int>::iterator itR;
 
-        pop = new int[nPop];    // start population vector with size nPop data.LoadBarreto("../Instances/21x5.dat");
+       
+
+        for(int i=0; i<data.No; i++){
+            
+            RDepot.push_back(i);
+            R.push_back(i);
+            
+        }
+
+        for(int i=data.No; i<data.N; i++){
+            
+            R.push_back(i);
+            
+        }
+
+        int soma=0; 
+
+        for(int i=data.No; i<data.N; i++){
+            
+            soma += data.d[i];
+
+        }
+
+        tam = soma / data.CV;
+
+        for(int i=0; i<tam; i++){
+
+            R.push_back(-1);
+
+        }
+
+        pop = new int[data.N + tam];    // start population vector with size nPop data.LoadBarreto("../Instances/21x5.dat");
+
+        // ramdom inicialization
+        srand(time(0));
+        aux = rand() % data.No;  
+        pop[0] = RDepot[aux];
+        
+        for(itR=R.begin(); itR!=R.end(); itR++){
+
+            if(*itR == RDepot[aux]){
+
+                R.erase(itR);
+                break;
+            }    
+
+        }
+        
+        for(int i=1; i<data.N + tam; i++){
+            
+            srand(time(0));
+            aux = rand() % R.size();  
+            pop[i] = R[aux];
+            
+            for(itR=R.begin(); itR!=R.end(); itR++){
+
+                if(*itR == R[aux]){
+
+                    R.erase(itR);
+                    break;
+                }    
+
+            }
+
+        }
 
     }
 
     int fitness(){              // calculate and return the fitness value of i individual
         
-        fitnessValue += data.FV;
-        bool possible = true;
+        aux = 0;
+        tam = 0;
+        fitnessValue = 0;
+        carroNow = 0;
+        depotNow = pop[0];
+        wayNow = pop[0];
+        depotNowValue = 0;
+        possible = true;
 
-        for(int i=1; i<data.N; i++){
+        fitnessValue += data.FV;
+        possible = true;
+
+        for(int i=1; i<(data.N + tam); i++){
             
-            
-            if(pop[i] == 0){    // zero 
+            if(pop[i] == -1){    // zero on article, -1 here
                 
                 // aux
 
@@ -43,7 +125,6 @@ public:
                 // fitness 
 
                 fitnessValue += data.FV; 
-
 
             } else if(pop[i] < data.No){ // it's a depot
 
@@ -59,7 +140,7 @@ public:
                     wayNow = pop[i];
                     depotNow = pop[i]; 
                     
-                }
+                } 
 
             } else {                // it's a costumer
 
@@ -98,31 +179,60 @@ public:
                 }
             }
 
-            if(i == data.N - 1){  // last iteration
+            if(i == data.N + tam - 1){  // last iteration
 
                 if(depotNow != wayNow){ // last depot is opened
 
-                    fitnessValue += fitnessValue += data.FD[depotNow];
+                    fitnessValue += data.FD[depotNow];
                     
                 }
 
             }
         }
-
+    
         return fitnessValue;
 
     }
+
+    void mutation(){
+
+        srand(time(0));
+
+        int randomN1 = (rand() % data.N + tam) + 1;       
+        int randomN2 = (rand() % data.N + tam) + 1;
+
+        int aux = pop[randomN1]; 
+        pop[randomN1] = pop[randomN2];
+        pop[randomN2] = aux; 
+        this->fitness();    
+    }
+
+    void print(){
+        
+        for(int i=0; i<(data.N + tam); i++){
+
+            cout << pop[i] << " ";
+
+        } 
+
+        cout << "Fitness: " << fitnessValue << endl;
+
+    }
+        
     
 };    
-
-using namespace std;
 
 int main(){
     
     data.LoadBarreto("../Instances/21x5.dat");
-    Individuo pop;data.LoadBarreto("../Instances/21x5.dat");
+    data.ShowValues();
+    Individuo * pop = new Individuo[5];
+    for(int i=0; i<5; i++){
+        pop[i].fitness();
+        pop[i].print();
+        pop[i].mutation();
+        pop[i].print();
+    }    
 
-
-    
     return 0;
 }

@@ -22,7 +22,7 @@ void Values::LoadBarreto(string file){
     //Create arrays
     CD = new int [No];
     FD = new int [No]; 
-    d = new int [Nc];
+    d = new int [N];
     //Create matrix
     c = new float* [N];
     for(i=0; i<N; i++)
@@ -68,7 +68,7 @@ void Values::LoadBarreto(string file){
 
     //Read the customers demands
     getline(data, aux);
-    for(i=0; i<Nc; i++){
+    for(i=No; i<N; i++){
         getline(data, aux); this->d[i] = stoi(aux);
     }
 
@@ -102,7 +102,7 @@ void Values::ShowValues(){
         cout << this->CD[i] << endl;
     }
     cout << "Demanda dos consumidores" <<endl;
-    for(i=0; i<Nc; i++){
+    for(i=No; i<N; i++){
         cout << this->d[i] << endl;
     }
     cout << "Custo de abertura dos depositos" <<endl;
