@@ -353,7 +353,6 @@ void crossOver1(Individuo * pop){
             }
 
         }
-    
 };
 
 int main(){
@@ -365,7 +364,11 @@ int main(){
     Individuo * pop = new Individuo[nPop];
 
     int geracao = 1;
-  
+
+        for(int i=0; i<(data.N + tam); i++){
+            pop[i].fitness();  
+        }
+
     while(true){
 
         cout << "--------------------------------" << endl;
@@ -373,7 +376,7 @@ int main(){
         geracao++;
 
         crossOver1(pop);
-        pop[r.next()].mutation();
+        pop[(r.next()%(data.N+tam))].mutation();
 
         for(int i=0; i<nPop; i++){
             pop[i].print();  
