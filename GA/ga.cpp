@@ -5,9 +5,9 @@
 #include <math.h>
 #include <cstdlib>
 #include "values.h"
-#define nPop 40
+#define nPop 80
 #define nRand 350
-#define nCross 20
+#define nCross 25
 
 Values data;
 int tam;
@@ -205,6 +205,7 @@ public:
                     wayNow = pop[i];
 
                     fitnessValue += data.FV;
+                    fitnessValue += data.FD[depotNow];
 
                     possible = false;
 
@@ -228,17 +229,31 @@ public:
     
 
 
-    void mutation(){
+    void mutation(int melhorAtual){
 
         int randomN1;
         int randomN2;
 
-        randomN1 = (r.next() % data.N + tam) + 1;       
-        randomN2 = (r.next() % data.N + tam) + 1;
+        do{
+            randomN1 = (r.next() % (data.N + tam));       
+            randomN2 = (r.next() % (data.N + tam));
+            if(randomN1==0) randomN1++;
+            if(randomN2==0) randomN2++;
+        } while(randomN1==melhorAtual && randomN2==melhorAtual);
 
+        double melhor = this->fitness();
         aux = pop[randomN1]; 
         pop[randomN1] = pop[randomN2];
         pop[randomN2] = aux; 
+
+        if(melhor > this->fitness()){
+
+            aux = pop[randomN1]; 
+            pop[randomN1] = pop[randomN2];
+            pop[randomN2] = aux; 
+
+        }
+
         this->fitness();    
     }
 
@@ -276,7 +291,11 @@ void crossOver1(Individuo * pop){
                 random1++;
             if(random2 == 0) 
                 random2++;               
-
+            
+            aux.clear();
+            RDepot.clear();
+            R.clear();
+            
             // mesclar pop[indN1] com pop[indN2] a partir do nodo random1
 
             for(int i=0; i<data.N; i++){
@@ -339,10 +358,14 @@ void crossOver1(Individuo * pop){
             pop[indN1 + (nPop/2)].fitness();        
         }
         
+        for(int i=0; i<(data.N + tam); i++){
+            pop[i].fitness();
+        }
+
         for(int i=0; i<(nPop/2); i++){
             
-            if(pop[i].fitnessValue > pop[i + (nPop)/2].fitnessValue){
-                
+            if((pop[i].fitnessValue > pop[i + (nPop)/2].fitnessValue) && pop[i + (nPop)/2].fitnessValue!=0){
+
                 pop[i].fitnessValue = pop[i + (nPop)/2].fitnessValue;
                 pop[i].possible = pop[i + (nPop/2)].possible;
                 
@@ -361,28 +384,38 @@ int main(){
     
     data.LoadBarreto("../Instances/21x5.dat");
     data.ShowValues();
-    Individuo * pop = new Individuo[nPop];
+    Individuo * geracao = new Individuo[nPop];
 
-    int geracao = 1;
+    int ger = 1;
 
         for(int i=0; i<(data.N + tam); i++){
-            pop[i].fitness();  
+            geracao[i].fitness();  
         }
 
-    while(true){
+    int melhor = 0;
+    
+    for(int j=0; j<1000; j++){
 
         cout << "--------------------------------" << endl;
-        cout << "----------" << geracao << "-----------------" << endl;
-        geracao++;
+        cout << "----------" << ger << "-----------------" << endl;
+        ger++;
 
-        crossOver1(pop);
-        pop[(r.next()%(data.N+tam))].mutation();
+        crossOver1(geracao);
+        geracao[r.next() % nPop].mutation(melhor);
 
+        melhor = 0;
         for(int i=0; i<nPop; i++){
-            pop[i].print();  
+            geracao[i].print();  
+
+            if(geracao[i].fitness() < geracao[melhor].fitness())
+                melhor = i;
+
         }
 
-        getchar();
+        cout << "--------------------------------" << endl;
+        cout << "Melhor Resultado--------" << geracao[melhor].fitness() << endl;
+
+    //    getchar();
 
     }
     
