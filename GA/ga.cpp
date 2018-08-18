@@ -5,9 +5,9 @@
 #include <math.h>
 #include <cstdlib>
 #include "values.h"
-#define nPop 80
-#define nRand 350
-#define nCross 25
+#define nPop 1024
+#define nRand 100000
+#define nCross 256
 
 Values data;
 int tam;
@@ -35,6 +35,7 @@ public:
         
         if(z >= nRand-1)
             z = 0;
+
         z++;    
         return aleatorio[z];
         
@@ -50,12 +51,14 @@ public:
     
     int * pop;              // pindividual vector
     int aux;
-    float fitnessValue; 
+    double fitnessValue; 
     bool possible;
-    int carroNow; 
+    double carroNow; 
     int depotNow;
-    int depotNowValue;
+    double depotNowValue;
     int wayNow;
+    bool depotNowOpen;
+    double atual;
 
     Individuo(){
         
@@ -129,76 +132,100 @@ public:
 
     }
 
-    int fitness(){              // calculate and return the fitness value of i individual
+    double fitness(){              // calculate and return the fitness value of i individual
         
         aux = 0;
         tam = 0;
         fitnessValue = 0;
         carroNow = 0;
         depotNow = pop[0];
+        depotNowOpen = 0;
         wayNow = pop[0];
         depotNowValue = 0;
         possible = true;
 
         fitnessValue += data.FV;
         possible = true;
+        
+
 
         for(int i=1; i<(data.N + tam); i++){
             
+        //    cout << "Indice : " << i << " elemento: " << pop[i] << endl;
+
             if(pop[i] == -1){    // zero on article, -1 here
-                
-                // aux
 
-                wayNow = depotNow;
-                carroNow = 0;
+            //    cout << "É para quebrar carro" << endl;
 
-                // fitness 
+                if(depotNowOpen == 1){
+                    fitnessValue += data.FD[depotNow];
+            //        cout << "Carro novo" << endl;
+                }
 
-                fitnessValue += data.FV; 
+                if(carroNow !=0){
+
+                    wayNow = depotNow;
+                    carroNow = 0;
+                    fitnessValue += data.FV; 
+                    
+                } else {
+                    
+                    wayNow = depotNow;
+                    carroNow = 0;
+
+                }
+
 
             } else if(pop[i] < data.No){ // it's a depot
 
-                if (wayNow < data.No) {
-
-                    depotNow = pop[i]; 
-                    depotNowValue = 0;
-                    wayNow = pop[i];
-
-                } else { 
+                if (depotNowOpen == false) {  // if the last was a depot, dont open the last
                     
-                    fitnessValue += data.FD[depotNow];
+                //    cout << "Nao abre o ultimo deposito" << endl;
+                    depotNow = pop[i]; 
+                    depotNowValue = 0;
+                    wayNow = pop[i];
+                    depotNowOpen = 0;
 
+                } else {                // else open the previous depot
+                //    cout << "Abre o ultimo deposito" << endl;
+                    fitnessValue += data.FD[depotNow];
+                    
                     wayNow = pop[i];
                     depotNowValue = 0;
                     depotNow = pop[i]; 
+                    depotNowOpen = 0;
                     
                 } 
 
             } else {                // it's a costumer
 
-                if(data.CD[depotNow] >= (depotNowValue + data.d[pop[i]])){ // verificar se o depot pode 
+                if(data.CD[depotNow] >= (depotNowValue + data.d[pop[i]])){ // verify if the actual depot can attend 
                     
-                    if(data.CV >= (carroNow + data.d[pop[i]])){ // verificar se o carro pode
+                    if(data.CV >= (carroNow + data.d[pop[i]])){ // verify if actual car can attend
 
+                //            cout << "Coloca no mesmo carro" << endl;
                         depotNowValue += data.d[pop[i]];    
                         fitnessValue += data.c[wayNow][pop[i]]; 
                         carroNow +=  data.d[pop[i]];
                         wayNow = pop[i];
+                        depotNowOpen = 1;
 
-                    } else {  // o carro não pode
+                    } else {  // the actual car can't
                         
+                //        cout << "Coloca noutro carro" << endl;
                         depotNowValue += data.d[pop[i]];
                         fitnessValue += data.c[depotNow][pop[i]];
                         carroNow =  data.d[pop[i]];
                         wayNow = pop[i];
 
                         fitnessValue += data.FV;
+                        depotNowOpen = 1;
 
                     }                             
             
-            
-                }  else { // impossible
+                }  else { // the depot is not able to attend
 
+                //    cout << "Impossível" << endl;
                     depotNowValue += data.d[pop[i]];
                     fitnessValue += data.c[depotNow][pop[i]];
                     carroNow =  data.d[pop[i]];
@@ -214,9 +241,10 @@ public:
 
             if(i == data.N + tam - 1){  // last iteration
 
-                if(depotNow != wayNow){ // last depot is opened
+                if(depotNowOpen == 1){ // last depot is opened
 
                     fitnessValue += data.FD[depotNow];
+                    fitnessValue += data.FV;
                     
                 }
 
@@ -227,8 +255,6 @@ public:
 
     }
     
-
-
     void mutation(int melhorAtual){
 
         int randomN1;
@@ -239,7 +265,8 @@ public:
             randomN2 = (r.next() % (data.N + tam));
             if(randomN1==0) randomN1++;
             if(randomN2==0) randomN2++;
-        } while(randomN1==melhorAtual && randomN2==melhorAtual);
+
+        } while(randomN1==melhorAtual || randomN2==melhorAtual);
 
         double melhor = this->fitness();
         aux = pop[randomN1]; 
@@ -265,7 +292,7 @@ public:
 
         } 
 
-        cout << "Fitness: " << fitnessValue <<" Possivel: " << possible  << endl;
+        cout << "Fitness: " << fixed << setprecision(2) << this->fitness() << " Possivel: " << possible  << endl;
 
     }
         
@@ -334,6 +361,7 @@ void crossOver1(Individuo * pop){
 
                 }
             }
+
         
             for(int i=0; i<(data.N + tam); i++){
                 
@@ -354,24 +382,19 @@ void crossOver1(Individuo * pop){
                 }        
 
             }
-        
-            pop[indN1 + (nPop/2)].fitness();        
+            
         }
         
-        for(int i=0; i<(data.N + tam); i++){
-            pop[i].fitness();
-        }
-
         for(int i=0; i<(nPop/2); i++){
             
-            if((pop[i].fitnessValue > pop[i + (nPop)/2].fitnessValue) && pop[i + (nPop)/2].fitnessValue!=0){
+            if((pop[i].fitness() > pop[i + (nPop)/2].fitness())){
 
-                pop[i].fitnessValue = pop[i + (nPop)/2].fitnessValue;
-                pop[i].possible = pop[i + (nPop/2)].possible;
-                
                 for(int l=0; l<= (data.N+tam); l++){
                     pop[i].pop[l] = pop[i + (nPop)/2].pop[l];
                 }        
+                
+                pop[i].fitness();
+                pop[i + (nPop)/2].fitness();
 
             }
 
@@ -393,30 +416,47 @@ int main(){
         }
 
     int melhor = 0;
-    
-    for(int j=0; j<1000; j++){
+
+   // getchar();
+    int melhorContador=0;
+    double melhorComp=0;
+    double atual;
+
+    for(int j=0; j<8000; j++){
 
         cout << "--------------------------------" << endl;
         cout << "----------" << ger << "-----------------" << endl;
         ger++;
 
         crossOver1(geracao);
-        geracao[r.next() % nPop].mutation(melhor);
-
+        
+        for(int i=0; i<35; i++)
+            geracao[r.next() % nPop].mutation(melhor);
+ 
         melhor = 0;
         for(int i=0; i<nPop; i++){
-            geracao[i].print();  
+        //    geracao[i].print();  
 
-            if(geracao[i].fitness() < geracao[melhor].fitness())
+            if(geracao[i].fitness() < geracao[melhor].fitness() && geracao[i].possible == 1)
                 melhor = i;
 
         }
+        
+        atual = geracao[melhor].fitness();
 
         cout << "--------------------------------" << endl;
-        cout << "Melhor Resultado--------" << geracao[melhor].fitness() << endl;
+        cout << "Melhor Resultado---" << melhor << ": ----" << fixed << setprecision(2) << atual << endl;
 
-    //    getchar();
+        if(melhorComp == atual){
+            melhorContador++;
+            if(melhorContador>=(nPop/2) || melhorContador>=100)
+                break;
+        } else {
 
+            melhorComp = atual;
+            melhorContador = 0;
+
+        }
     }
     
     return 0;
