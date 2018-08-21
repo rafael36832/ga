@@ -144,7 +144,6 @@ public:
         depotNowValue = 0;
         possible = true;
 
-        fitnessValue += data.FV;
         possible = true;
         
 
@@ -189,6 +188,7 @@ public:
                 } else {                // else open the previous depot
                 //    cout << "Abre o ultimo deposito" << endl;
                     fitnessValue += data.FD[depotNow];
+                    fitnessValue += data.FV;
                     
                     wayNow = pop[i];
                     depotNowValue = 0;
@@ -411,10 +411,6 @@ int main(){
 
     int ger = 1;
 
-        for(int i=0; i<(data.N + tam); i++){
-            geracao[i].fitness();  
-        }
-
     int melhor = 0;
 
    // getchar();
@@ -435,7 +431,7 @@ int main(){
  
         melhor = 0;
         for(int i=0; i<nPop; i++){
-        //    geracao[i].print();  
+            geracao[i].print();  
 
             if(geracao[i].fitness() < geracao[melhor].fitness() && geracao[i].possible == 1)
                 melhor = i;
@@ -456,7 +452,7 @@ int main(){
             melhorComp = atual;
             melhorContador = 0;
 
-        }
+        } 
     }
     
     return 0;
