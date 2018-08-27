@@ -37,8 +37,9 @@ public:
             z = 0;
 
         z++;    
-        return aleatorio[z];
-        
+
+        return aleatorio[z];    
+
 
     }
 };
@@ -134,8 +135,6 @@ public:
 
     double fitness(){              // calculate and return the fitness value of i individual
         
-        aux = 0;
-        tam = 0;
         fitnessValue = 0;
         carroNow = 0;
         depotNow = pop[0];
@@ -144,113 +143,105 @@ public:
         depotNowValue = 0;
         possible = true;
 
-        possible = true;
-        
-
-
         for(int i=1; i<(data.N + tam); i++){
-            
-        //    cout << "Indice : " << i << " elemento: " << pop[i] << endl;
 
-            if(pop[i] == -1){    // zero on article, -1 here
+            if(pop[i]==-1){ // it's a dummy
 
-            //    cout << "É para quebrar carro" << endl;
+                if(carroNow != 0){ // if the car is not empty
 
-                if(depotNowOpen == 1){
-                    fitnessValue += data.FD[depotNow];
-            //        cout << "Carro novo" << endl;
-                }
-
-                if(carroNow !=0){
-
-                    wayNow = depotNow;
-                    carroNow = 0;
-                    fitnessValue += data.FV; 
-                    
-                } else {
-                    
-                    wayNow = depotNow;
-                    carroNow = 0;
-
-                }
-
-
-            } else if(pop[i] < data.No){ // it's a depot
-
-                if (depotNowOpen == false) {  // if the last was a depot, dont open the last
-                    
-                //    cout << "Nao abre o ultimo deposito" << endl;
-                    depotNow = pop[i]; 
-                    depotNowValue = 0;
-                    wayNow = pop[i];
-                    depotNowOpen = 0;
-
-                } else {                // else open the previous depot
-                //    cout << "Abre o ultimo deposito" << endl;
-                    fitnessValue += data.FD[depotNow];
                     fitnessValue += data.FV;
-                    
-                    wayNow = pop[i];
-                    depotNowValue = 0;
+                    wayNow = depotNow;
+                    carroNow = 0;
+
+                } else { // if the car is empty
+
+                    wayNow = depotNow;
+                    carroNow = 0;
+
+                }
+
+
+            } else if (pop[i] < data.No){ // it's a depot
+
+                if(depotNowOpen==0) { //previous depot not opened
+
                     depotNow = pop[i]; 
-                    depotNowOpen = 0;
+                    depotNowValue = 0;
+                    wayNow = pop[i];
+                    carroNow = 0;
                     
-                } 
 
-            } else {                // it's a costumer
+                } else { //previous depot opened
 
-                if(data.CD[depotNow] >= (depotNowValue + data.d[pop[i]])){ // verify if the actual depot can attend 
-                    
-                    if(data.CV >= (carroNow + data.d[pop[i]])){ // verify if actual car can attend
-
-                //            cout << "Coloca no mesmo carro" << endl;
-                        depotNowValue += data.d[pop[i]];    
-                        fitnessValue += data.c[wayNow][pop[i]]; 
-                        carroNow +=  data.d[pop[i]];
-                        wayNow = pop[i];
-                        depotNowOpen = 1;
-
-                    } else {  // the actual car can't
-                        
-                //        cout << "Coloca noutro carro" << endl;
-                        depotNowValue += data.d[pop[i]];
-                        fitnessValue += data.c[depotNow][pop[i]];
-                        carroNow =  data.d[pop[i]];
-                        wayNow = pop[i];
+                    if(carroNow != 0){
 
                         fitnessValue += data.FV;
-                        depotNowOpen = 1;
+                         
+                    }
 
-                    }                             
-            
-                }  else { // the depot is not able to attend
-
-                //    cout << "Impossível" << endl;
-                    depotNowValue += data.d[pop[i]];
-                    fitnessValue += data.c[depotNow][pop[i]];
-                    carroNow =  data.d[pop[i]];
-                    wayNow = pop[i];
-
-                    fitnessValue += data.FV;
                     fitnessValue += data.FD[depotNow];
-
-                    possible = false;
+                    wayNow = pop[i];     
+                    carroNow = 0;
+                    depotNow = pop[i]; 
+                    depotNowOpen = 0;
+                    depotNowValue = 0;
 
                 }
-            }
 
-            if(i == data.N + tam - 1){  // last iteration
 
-                if(depotNowOpen == 1){ // last depot is opened
+            } else { //it's a costumer
 
-                    fitnessValue += data.FD[depotNow];
-                    fitnessValue += data.FV;
+                if((depotNow + data.d[i]) <= data.CD[depotNow]){ // if depot is enough
+
+                    if((carroNow + data.d[i]) <= data.CV){ // if the atual car is enough
+
+                        carroNow += data.d[i];
+                        depotNowValue += data.d[i];
+                        fitnessValue += data.c[wayNow][pop[i]];
+                        wayNow = pop[i];
+                        depotNowOpen = true;
+
+                    } else { // new car required
+                        
+                        carroNow = data.d[i];
+                        depotNowValue += data.d[i];
+                        fitnessValue += data.c[depotNow][pop[i]];
+                        wayNow = pop[i];
+                        depotNowOpen = true;
+
+                    }
+
+                } else {
+                    
+                    carroNow += data.d[i];
+                    depotNowValue += data.d[i];
+                    fitnessValue += data.c[depotNow][pop[i]];
+                    fitnessValue += depotNowValue - data.CD[depotNow];
+                    possible = false;
+                    depotNowOpen = true;
                     
                 }
 
+                if(i == (data.N + tam)-1){
+                    
+                    if(depotNowOpen){
+
+                        fitnessValue += data.FD[depotNow]; 
+
+                    }
+
+                    if(carroNow !=0){
+                        
+                        fitnessValue += data.FV;
+
+                    }
+
+                }
+
             }
+
         }
-    
+
         return fitnessValue;
 
     }
@@ -312,13 +303,10 @@ void crossOver1(Individuo * pop){
             indN1 = (r.next() % (nPop/2));       
             indN2 = (r.next() % (nPop/2));
             random1 = (r.next() % (data.N + tam));
-            random2 = (r.next() % (data.N + tam));
 
             if(random1 == 0) 
                 random1++;
-            if(random2 == 0) 
-                random2++;               
-            
+                
             aux.clear();
             RDepot.clear();
             R.clear();
@@ -394,7 +382,6 @@ void crossOver1(Individuo * pop){
                 }        
                 
                 pop[i].fitness();
-                pop[i + (nPop)/2].fitness();
 
             }
 
@@ -419,7 +406,7 @@ int main(){
     double atual;
 
     for(int j=0; j<8000; j++){
-
+        
         cout << "--------------------------------" << endl;
         cout << "----------" << ger << "-----------------" << endl;
         ger++;
@@ -431,10 +418,11 @@ int main(){
  
         melhor = 0;
         for(int i=0; i<nPop; i++){
-            geracao[i].print();  
 
             if(geracao[i].fitness() < geracao[melhor].fitness() && geracao[i].possible == 1)
                 melhor = i;
+
+            geracao[i].print();  
 
         }
         
@@ -442,7 +430,7 @@ int main(){
 
         cout << "--------------------------------" << endl;
         cout << "Melhor Resultado---" << melhor << ": ----" << fixed << setprecision(2) << atual << endl;
-
+/*
         if(melhorComp == atual){
             melhorContador++;
             if(melhorContador>=(nPop/2) || melhorContador>=100)
@@ -453,6 +441,8 @@ int main(){
             melhorContador = 0;
 
         } 
+
+*/
     }
     
     return 0;
