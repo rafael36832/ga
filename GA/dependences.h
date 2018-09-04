@@ -5,23 +5,22 @@
 #include <math.h>
 #include <cstdlib>
 #include <cstring>
-#define nPop 1024
-#define nRand 100000
-#define nCross 256
 
 class randomico{
 public:
 
     int * aleatorio;
     int z;
+	int nRand;
 
-    randomico(){	
+    randomico(int nRand){	
 
+		this->nRand = nRand;
 		aleatorio = new int[nRand];
 	    z=0;
 
-        srand(time(0));
-            
+		srand(time(NULL));
+
         for(int i=0; i<nRand; i++){
 
             aleatorio[i] = rand();
@@ -31,14 +30,12 @@ public:
     }
 
     int next(){
-        
-        if(z >= nRand -1)
+
+		z++;          
+        if(z >= this->nRand-1)
             z = 0;
-
-        z++;    
-
-        return aleatorio[z];    
-
+			
+		return aleatorio[z];    
 
     }
 };
@@ -53,6 +50,8 @@ public:
 	int tam;   
 
 	Individuo(){
+
+		possible = false;
 
 	}
 
@@ -69,7 +68,7 @@ public:
 	}
 
 	void preenche (Values &data, randomico &r){
-
+		
 		int aux;        
 		vector<int> RDepot;         
 		vector<int> R;
@@ -96,7 +95,7 @@ public:
 
 		}
 
-		tam = soma / data.CV;
+		tam = (soma / data.CV);
 
 		for(int i=0; i<tam; i++){
 

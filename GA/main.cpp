@@ -6,9 +6,9 @@
 #include <cstdlib>
 #include "values.h"
 #include "dependences.h" 
-#define nPop 1024
-#define nRand 100000
-#define nCross 256
+#define nPop 256
+#define nRand 1000000
+#define nCross 10000000
 
 double fitness(Individuo &ind, Values &data){
 
@@ -23,7 +23,7 @@ double fitness(Individuo &ind, Values &data){
 	//cout << "Entrou no fitness com:" << endl;
 	//cout << "Ind.tam: " << ind.tam << " fitness value = " << ind.fitnessValue << endl;
 
-        for(int i=1; i<ind.tam; i++){
+        for(int i=0; i<=ind.tam; i++){
 
             if(ind.pop[i]==-1){ // it's a dummy
 
@@ -72,7 +72,7 @@ double fitness(Individuo &ind, Values &data){
 
             } else { //it's a costumer
 
-                if((depotNow + data.d[ind.pop[i]]) <= data.CD[depotNow]){ // if depot is enough
+                if((depotNowValue + data.d[ind.pop[i]]) <= data.CD[depotNow]){ // if depot is enough
 
                     if((carroNow + data.d[ind.pop[i]]) <= data.CV){ // if the atual car is enough
 
@@ -97,13 +97,13 @@ double fitness(Individuo &ind, Values &data){
                     carroNow += data.d[ind.pop[i]];
                     depotNowValue += data.d[ind.pop[i]];
                     ind.fitnessValue += data.c[depotNow][ind.pop[i]];
-                    ind.fitnessValue += depotNowValue - data.CD[depotNow];
+                    ind.fitnessValue += (depotNowValue - data.CD[depotNow]);
                     ind.possible = false;
                     depotNowOpen = true;
                     
                 }
 
-                if(i == ind.tam-1){
+                if(i == ind.tam ){
                     
                     if(depotNowOpen){
 			
@@ -127,139 +127,194 @@ double fitness(Individuo &ind, Values &data){
 	//cout << "Fitness value: " << ind.fitnessValue << endl;
 }
 
-void crossOver1(Individuo * pop, Values &data, randomico &r){
+void crossOver1(Individuo * pop, Values &data, randomico &r, double &melhor, int &indMelhor){
 
-        int indN1, indN2, random1, random2;
-        int tamAux;
-        vector<int> aux;
-        vector<int> RDepot;         
-        vector<int> R;
-        vector<int>::iterator itR;
+    int indN1, indN2, random1, random2;
+    int tamAux;
+    vector<int> aux;
+    vector<int> RDepot;         
+    vector<int> R;
+    vector<int>::iterator itR;
 
-        for(int j=0; j<nCross; j++){
+    indN1 = (r.next() % (nPop/2));       
+    indN2 = (r.next() % (nPop/2));
+    random1 = (r.next() % (pop[0].tam));
 
-            indN1 = (r.next() % (nPop/2));       
-            indN2 = (r.next() % (nPop/2));
-            random1 = (r.next() % (pop[0].tam));
+    if(random1 == 0) 
+        random1++;
+        
+    aux.clear();
+    RDepot.clear();
+    R.clear();
+    
+    // mesclar pop[indN1] com pop[indN2] a partir do nodo random1
 
-            if(random1 == 0) 
+    for(int i=0; i<data.N; i++){
+        
+        R.push_back(i);
+        
+    }
+
+    int soma=0; 
+
+    for(int i=data.No; i<data.N; i++){
+        
+        soma += data.d[i];
+
+    }
+
+    tamAux = soma / data.CV;
+
+    for(int i=0; i<tamAux; i++){
+
+        R.push_back(-1);
+
+    }
+
+    for(int i=0; i<random1; i++){
+        
+        pop[indN1 + (nPop/2)].pop[i] = pop[indN1].pop[i];
+        // colocar num vector o que ja tem (ou tirar dum vector com tudo)
+        for(itR=R.begin(); itR!=R.end(); itR++){
+
+            if(*itR == pop[indN1].pop[i]){
+
+                R.erase(itR);
+                break;
+            }    
+
+        }
+    }
+
+    for(int i=0; i<pop[0].tam; i++){
+        
+        for(itR=R.begin(); itR!=R.end(); itR++){
+            
+            if(*itR == pop[indN2].pop[i] && itR!=R.end()){
+
+                pop[indN1 + ((nPop)/2)].pop[random1] = pop[indN2].pop[i];
+
+                R.erase(itR);
                 random1++;
-                
-            aux.clear();
-            RDepot.clear();
-            R.clear();
+                break;
             
-            // mesclar pop[indN1] com pop[indN2] a partir do nodo random1
-
-            for(int i=0; i<data.N; i++){
-                
-                R.push_back(i);
-                
             }
 
-            int soma=0; 
+            if(R.size()==0)
+                break; 
+        }        
 
-            for(int i=data.No; i<data.N; i++){
-                
-                soma += data.d[i];
+    }
 
-            }
+    fitness(pop[indN1 + (nPop)/2], data);
+    fitness(pop[indN1], data);
 
-            tamAux = soma / data.CV;
+    if((pop[indN1].fitnessValue > pop[indN1 + (nPop)/2].fitnessValue) && pop[indN1 + (nPop)/2].possible){
 
-            for(int i=0; i<tamAux; i++){
+        for(int l=0; l<= pop[0].tam; l++){
+            pop[indN1].pop[l] = pop[indN1 + (nPop)/2].pop[l];
+        }        
 
-                R.push_back(-1);
+        fitness(pop[indN1], data);
+    }   
 
-            }
-
-            for(int i=0; i<random1; i++){
-                
-                pop[indN1 + (nPop/2)].pop[i] = pop[indN1].pop[i];
-                // colocar num vector o que ja tem (ou tirar dum vector com tudo)
-                for(itR=R.begin(); itR!=R.end(); itR++){
-
-                    if(*itR == pop[indN1].pop[i]){
-
-                        R.erase(itR);
-                        break;
-                    }    
-
-                }
-            }
-
-        
-            for(int i=0; i<pop[0].tam; i++){
-                
-                for(itR=R.begin(); itR!=R.end(); itR++){
-                    
-                    if(*itR == pop[indN2].pop[i] && itR!=R.end()){
-
-                        pop[indN1 + ((nPop)/2)].pop[random1] = pop[indN2].pop[i];
-
-                        R.erase(itR);
-                        random1++;
-                        break;
-                    
-                    }
-
-                    if(R.size()==0)
-                        break; 
-                }        
-
-            }
-            
-        }
-        
-        for(int i=0; i<(nPop/2); i++){
-            
-            if((pop[i].fitnessValue > pop[i + (nPop)/2].fitnessValue)){
-
-                fitness(pop[i], data);
-                fitness(pop[i + (nPop)/2], data);
-
-                for(int l=0; l<= pop[0].tam; l++){
-                    pop[i].pop[l] = pop[i + (nPop)/2].pop[l];
-                }        
-
-                pop[i].fitnessValue = pop[i + (nPop)/2].fitnessValue;
-                pop[i].possible = pop[i + (nPop)/2].possible;
-
-            }
-
-        }
+    if((pop[indN1].fitnessValue < pop[indMelhor].fitnessValue) && pop[indN1].possible){
+        indMelhor = indN1; 
+        melhor = pop[indN1].fitnessValue;
+    }
 };
 
+void mutation(Individuo &ind, Values &data, randomico &r){ /// beeeem arcaica ainda
 
+    int randomN1;
+    int randomN2;
+    
+    randomN1 = (r.next() % (ind.tam));       
+    randomN2 = (r.next() % (ind.tam));
+    if(randomN1==0) randomN1++;
+    if(randomN2==0) randomN2++;
+    if(randomN1==(ind.tam)) randomN1--;
+    if(randomN2==(ind.tam)) randomN2--;
+
+    int aux;
+    aux = ind.pop[randomN1];
+    ind.pop[randomN1] = ind.pop[randomN2];
+    ind.pop[randomN2] = aux;
+
+}
 
 int main(){
 
+    // inicialização e leitura dos dados
+    int NRand = nRand;
 	Values data;
-	randomico r;
-	data.LoadBarreto("../Instances/21x5.dat");
-    	data.ShowValues();
+	randomico r(NRand);
 
-	//int vet[] = {0,1,12,10,7,8,-1,14,13,11,9,6,5,-1,15,2,3,-1,17,-1,20,18,16,19,-1,21,24,22,-1,23,25,4};
-	//Individuo ind(vet, 32);
-	//ind.print();
-	//fitness(ind, data);
+	data.LoadBarreto("../Instances/21x5.dat");
+    data.ShowValues();
+
+    double melhor=9999999999;
+    int indMelhor=0;
 
     Individuo pop[nPop];
-    for(int i=0; i<nPop; i++)
-        pop[i].preenche(data, r);
-
+   
     for(int i=0; i<nPop; i++){
+
+        pop[i].preenche(data, r);
         fitness(pop[i], data);
-        pop[i].print();
+
+        if((pop[i].fitnessValue < melhor) && pop[i].possible){
+            melhor = pop[i].fitnessValue;
+            indMelhor = i;
+        }
+
     }
+    // crossOver e taxa de mutação
+    int aux;
+    double anterior = melhor; 
+    int contConvergencia=0;
 
-    for(int i=0; i<400; i++)
-        crossOver1(pop, data, r);
+    for(int i=0; i<nCross; i++){
 
+        crossOver1(pop, data, r, melhor, indMelhor); // Chama o crossOver aleatório
+
+        if (i%20==0){ // Faz mutação
+
+            do{
+                aux = r.next()%(pop[0].tam);
+            
+            } while(aux==indMelhor);
+            
+            mutation(pop[aux], data, r);
+            fitness(pop[aux], data);
+
+            if((pop[aux].fitnessValue < pop[indMelhor].fitnessValue) && pop[aux].possible){
+                indMelhor = aux;
+                melhor = pop[aux].fitnessValue;
+            }
+        }
+
+        // Verifica se tá com o mesmo resultado depois de muito tempo
+        if(anterior == melhor){
+            contConvergencia++;
+        } else {
+            contConvergencia =0;
+            anterior = melhor;
+        }
+        if(contConvergencia >=((nCross/nPop)*2)){
+            cout << "Saiu depois de " << contConvergencia << " operações com o mesmo resultado" << endl;
+            break;
+        }
+    }
+/*
     for(int i=0; i<nPop; i++){
         fitness(pop[i], data);
         pop[i].print();
     }	
+*/    
+    cout << endl;
+    cout << "Melhor : POP[" << indMelhor << "] = " << melhor << endl;
+    pop[indMelhor].print();
     
-	return 0; 
+    return 0; 
 } 
