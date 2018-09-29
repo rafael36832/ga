@@ -1,5 +1,4 @@
 #include "values.h"
-
 Values::Values(){}
 
 Values::~Values(){}

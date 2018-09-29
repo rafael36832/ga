@@ -5,10 +5,14 @@
 #include <math.h>
 #include <cstdlib>
 #include "values.h"
+#include "Values.h" 
 #include "dependences.h" 
-#define nPop 256
+#include "greedy.h"
+#define nPop 128
 #define nRand 1000000
-#define nCross 10000000
+#define nCross 100000000
+#define MAXREP 100000
+#define NMUTATION 32
 
 double fitness(Individuo &ind, Values &data){
 
@@ -257,7 +261,7 @@ int main(){
     int indMelhor=0;
 
     Individuo pop[nPop];
-   
+  
     for(int i=0; i<nPop; i++){
 
         pop[i].preenche(data, r);
@@ -276,12 +280,12 @@ int main(){
 
     for(int i=0; i<nCross; i++){
 
-        crossOver1(pop, data, r, melhor, indMelhor); // Chama o crossOver aleatório
+        crossOver1(pop, data, r, melhor, indMelhor); // Chama o crossOver aleatório	
 
-        if (i%20==0){ // Faz mutação
+        if (i%NMUTATION==0){ // Faz mutação
 
             do{
-                aux = r.next()%(pop[0].tam);
+                aux = r.next()%(pop[1].tam);
             
             } while(aux==indMelhor);
             
@@ -289,9 +293,11 @@ int main(){
             fitness(pop[aux], data);
 
             if((pop[aux].fitnessValue < pop[indMelhor].fitnessValue) && pop[aux].possible){
+
                 indMelhor = aux;
                 melhor = pop[aux].fitnessValue;
             }
+            
         }
 
         // Verifica se tá com o mesmo resultado depois de muito tempo
@@ -301,7 +307,7 @@ int main(){
             contConvergencia =0;
             anterior = melhor;
         }
-        if(contConvergencia >=((nCross/nPop)*2)){
+        if(contConvergencia >= MAXREP){
             cout << "Saiu depois de " << contConvergencia << " operações com o mesmo resultado" << endl;
             break;
         }
@@ -315,6 +321,25 @@ int main(){
     cout << endl;
     cout << "Melhor : POP[" << indMelhor << "] = " << melhor << endl;
     pop[indMelhor].print();
-    
+
+    Values2 data2;
+	data2.LoadBarreto("../Instances/21x5.dat");
+    vector<int> teste2;
+    teste2 = GreedyAlg(data2); 
+
+    int vet[teste2.size()];
+
+    cout << "----------------" << endl;
+    for (int i=0; i<teste2.size(); i++){
+        cout << teste2[i] << " ";
+        vet[i] = teste2[i] -1; 
+    }
+
+    cout << endl;
+
+    Individuo individual(vet,teste2.size());
+    fitness(individual, data);
+    individual.print();
+
     return 0; 
 } 
